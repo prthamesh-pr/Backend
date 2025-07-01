@@ -108,7 +108,8 @@ const vehicleSchema = new mongoose.Schema({
     dlNumber: String,
     idProofType: {
       type: String,
-      enum: ['Aadhaar', 'PAN', 'DL']
+      enum: ['Aadhaar', 'PAN', 'DL', 'Voter', 'Passport'],
+      default: 'Aadhaar'
     },
     buyerPhoto: {
       filename: String,
@@ -147,5 +148,27 @@ vehicleSchema.virtual('calculatedBalance').get(function() {
   }
   return 0;
 });
+
+// Transform photos to include full URLs
+vehicleSchema.methods.toJSON = function() {
+  const vehicle = this.toObject();
+  
+  // Transform vehicle photos
+  if (vehicle.photos && vehicle.photos.length > 0) {
+    vehicle.photos = vehicle.photos.map(photo => ({
+      ...photo,
+      url: photo.path ? photo.path.replace(/\\/g, '/').replace(/^.*\/uploads\//, '/uploads/') : null
+    }));
+  }
+  
+  // Transform buyer photo
+  if (vehicle.buyer && vehicle.buyer.buyerPhoto && vehicle.buyer.buyerPhoto.path) {
+    vehicle.buyer.buyerPhoto.url = vehicle.buyer.buyerPhoto.path
+      .replace(/\\/g, '/')
+      .replace(/^.*\/uploads\//, '/uploads/');
+  }
+  
+  return vehicle;
+};
 
 module.exports = mongoose.model('Vehicle', vehicleSchema);

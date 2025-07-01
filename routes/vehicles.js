@@ -339,11 +339,11 @@ router.put('/:id', auth, upload.array('newPhotos', 6), async (req, res) => {
 
 // Vehicle Out - mark vehicle as sold
 router.post('/:id/out', auth, upload.single('buyerPhoto'), [
-  body('buyerName').notEmpty().trim(),
-  body('address').notEmpty().trim(),
-  body('mobileNo').matches(/^[6-9]\d{9}$/),
-  body('price').isFloat({ min: 0 }),
-  body('idProofType').isIn(['Aadhaar', 'PAN', 'DL', 'Voter', 'Passport'])
+  body('buyerName').notEmpty().trim().withMessage('Buyer name is required'),
+  body('address').notEmpty().trim().withMessage('Address is required'),
+  body('mobileNo').matches(/^[6-9]\d{9}$/).withMessage('Valid mobile number is required'),
+  body('price').isFloat({ min: 0 }).withMessage('Valid price is required'),
+  body('idProofType').optional().isIn(['Aadhaar', 'PAN', 'DL', 'Voter', 'Passport']).withMessage('Invalid ID proof type')
 ], async (req, res) => {
   try {
     console.log('Vehicle Out Request - Vehicle ID:', req.params.id);
@@ -393,7 +393,7 @@ router.post('/:id/out', auth, upload.single('buyerPhoto'), [
       aadharCard: req.body.aadharCard || '',
       panCard: req.body.panCard || '',
       dlNumber: req.body.dlNumber || '',
-      idProofType: req.body.idProofType,
+      idProofType: req.body.idProofType || 'Aadhaar', // Default value
       buyerPhoto: buyerPhoto
     };
 
