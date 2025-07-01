@@ -206,20 +206,27 @@ router.get('/vehicle/:id/pdf', auth, async (req, res) => {
     // Pipe PDF to response
     doc.pipe(res);
 
-    // Header
-    doc.fontSize(24).text('Jivhala Motors', { align: 'center' });
-    doc.fontSize(12).text('Your Trusted Vehicle Partner', { align: 'center' });
-    doc.text('Contact: +91-XXXXXXXXXX | Email: info@jivhalamotors.com', { align: 'center' });
-    doc.moveDown(2);
+    // Header with Logo placeholder and company info
+    doc.fontSize(24).font('Helvetica-Bold').text('Jivhala Motors', 50, 50);
+    doc.fontSize(12).font('Helvetica').text('Your Trusted Vehicle Partner', 50, 80);
+    
+    // Contact details on the right
+    doc.fontSize(10);
+    doc.text('Contact: +91-XXXXXXXXXX', 400, 50);
+    doc.text('Email: info@jivhalamotors.com', 400, 65);
+    doc.text('Address: Your Address Here', 400, 80);
+    
+    doc.moveDown(3);
 
     // Vehicle In Details Box
-    doc.rect(50, doc.y, 500, 200).stroke();
-    doc.fontSize(16).font('Helvetica-Bold').text('Vehicle In Details', 60, doc.y + 10);
+    const boxY = doc.y;
+    doc.rect(50, boxY, 500, 220).stroke();
+    doc.fontSize(16).font('Helvetica-Bold').text('Vehicle Details', 60, boxY + 10);
     doc.fontSize(11).font('Helvetica');
     
-    let yPos = doc.y + 35;
+    let yPos = boxY + 35;
     const leftCol = 60;
-    const rightCol = 300;
+    const rightCol = 320;
 
     doc.text(`Unique ID: ${vehicle.uniqueId}`, leftCol, yPos);
     doc.text(`In Date: ${vehicle.vehicleInDate.toLocaleDateString()}`, rightCol, yPos);
@@ -245,17 +252,26 @@ router.get('/vehicle/:id/pdf', auth, async (req, res) => {
     doc.text(`Insurance Date: ${vehicle.insuranceDate ? vehicle.insuranceDate.toLocaleDateString() : 'N/A'}`, rightCol, yPos);
     yPos += 20;
 
-    doc.text(`Documents: RC-${vehicle.documents.RC ? 'Yes' : 'No'}, PUC-${vehicle.documents.PUC ? 'Yes' : 'No'}, NOC-${vehicle.documents.NOC ? 'Yes' : 'No'}`, leftCol, yPos);
+    doc.text(`Challan: ${vehicle.challan || 'N/A'}`, leftCol, yPos);
+    yPos += 20;
+
+    // Documents with checkboxes
+    doc.text(`Documents:`, leftCol, yPos);
+    yPos += 15;
+    doc.text(`☐ RC: ${vehicle.documents.RC ? 'Yes' : 'No'}`, leftCol, yPos);
+    doc.text(`☐ PUC: ${vehicle.documents.PUC ? 'Yes' : 'No'}`, leftCol + 100, yPos);
+    doc.text(`☐ NOC: ${vehicle.documents.NOC ? 'Yes' : 'No'}`, leftCol + 200, yPos);
 
     doc.moveDown(3);
 
     // Buyer Details Box (if vehicle is out)
     if (vehicle.status === 'out' && vehicle.buyer) {
-      doc.rect(50, doc.y, 500, 180).stroke();
-      doc.fontSize(16).font('Helvetica-Bold').text('Buyer Details', 60, doc.y + 10);
+      const buyerBoxY = doc.y;
+      doc.rect(50, buyerBoxY, 500, 200).stroke();
+      doc.fontSize(16).font('Helvetica-Bold').text('Buyer Details', 60, buyerBoxY + 10);
       doc.fontSize(11).font('Helvetica');
       
-      yPos = doc.y + 35;
+      yPos = buyerBoxY + 35;
 
       doc.text(`Buyer Name: ${vehicle.buyer.buyerName}`, leftCol, yPos);
       doc.text(`Out Date: ${vehicle.outDate ? vehicle.outDate.toLocaleDateString() : 'N/A'}`, rightCol, yPos);
@@ -284,13 +300,22 @@ router.get('/vehicle/:id/pdf', auth, async (req, res) => {
 
     // Signature section
     doc.moveDown(2);
-    doc.text('Buyer Signature: ____________________', 60, doc.y);
-    doc.text('Owner Signature: ____________________', 350, doc.y);
+    
+    // Create signature boxes
+    const signatureY = doc.y;
+    doc.rect(60, signatureY, 180, 60).stroke();
+    doc.rect(360, signatureY, 180, 60).stroke();
+    
+    doc.text('Owner Signature', 110, signatureY + 70);
+    if (vehicle.status === 'out') {
+      doc.text('Buyer Signature', 410, signatureY + 70);
+    }
 
     // Footer
-    doc.moveDown(2);
+    doc.moveDown(3);
     doc.fontSize(14).font('Helvetica-Bold').text('Thank you for trusting Jivhala Motors!', { align: 'center' });
-    doc.fontSize(10).font('Helvetica').text('Designed and Developed by 5techG', { align: 'center' });
+    doc.moveDown(1);
+    doc.fontSize(10).font('Helvetica').text('Designed and Developed by 5TechG', { align: 'center' });
 
     doc.end();
   } catch (error) {

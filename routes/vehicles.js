@@ -379,9 +379,9 @@ router.post('/:id/out', auth, upload.single('buyerPhoto'), [
       token: req.body.token ? parseFloat(req.body.token) : 0,
       receivedPrice: req.body.receivedPrice ? parseFloat(req.body.receivedPrice) : 0,
       balance: req.body.balance ? parseFloat(req.body.balance) : 0,
-      aadharCard: req.body.aadharCard,
-      panCard: req.body.panCard,
-      dlNumber: req.body.dlNumber,
+      aadharCard: req.body.aadharCard || '',
+      panCard: req.body.panCard || '',
+      dlNumber: req.body.dlNumber || '',
       idProofType: req.body.idProofType,
       buyerPhoto: buyerPhoto
     };
@@ -393,13 +393,18 @@ router.post('/:id/out', auth, upload.single('buyerPhoto'), [
 
     await vehicle.save();
 
+    // Populate the response with complete vehicle data
+    const updatedVehicle = await Vehicle.findById(vehicle._id)
+      .populate('createdBy', 'name username')
+      .populate('updatedBy', 'name username');
+
     res.json({
       message: 'Vehicle marked as out successfully',
-      vehicle: vehicle
+      vehicle: updatedVehicle
     });
   } catch (error) {
     console.error('Vehicle out error:', error);
-    res.status(500).json({ message: 'Error marking vehicle as out' });
+    res.status(500).json({ message: 'Error marking vehicle as out', error: error.message });
   }
 });
 
