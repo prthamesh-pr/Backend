@@ -260,7 +260,8 @@ router.get('/profile', auth, async (req, res) => {
 // Update profile
 router.put('/profile', auth, [
   body('name').optional().isLength({ min: 2 }).trim(),
-  body('username').optional().isLength({ min: 3 }).trim()
+  body('username').optional().isLength({ min: 3 }).trim(),
+  body('email').optional().isEmail().normalizeEmail()
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -268,7 +269,7 @@ router.put('/profile', auth, [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { name, username } = req.body;
+    const { name, username, email } = req.body;
     const user = await User.findById(req.user.userId);
 
     if (!user) {
@@ -282,6 +283,15 @@ router.put('/profile', auth, [
         return res.status(400).json({ message: 'Username already taken' });
       }
       user.username = username;
+    }
+
+    // Check if email is already taken
+    if (email && email !== user.email) {
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({ message: 'Email already taken' });
+      }
+      user.email = email;
     }
 
     if (name) user.name = name;
