@@ -64,13 +64,35 @@ router.post('/in', auth, upload.array('photos', 6), [
     }
 
     // Check if vehicle number already exists
-    const existingVehicle = await Vehicle.findOne({ 
+    const existingVehicleByNumber = await Vehicle.findOne({ 
       vehicleNumber: req.body.vehicleNumber.toUpperCase() 
     });
     
-    if (existingVehicle) {
+    if (existingVehicleByNumber) {
       return res.status(400).json({ 
         message: 'Vehicle with this number already exists' 
+      });
+    }
+
+    // Check if chassis number already exists
+    const existingVehicleByChassis = await Vehicle.findOne({ 
+      chassisNo: req.body.chassisNo.toUpperCase() 
+    });
+    
+    if (existingVehicleByChassis) {
+      return res.status(400).json({ 
+        message: 'Vehicle with this chassis number already exists' 
+      });
+    }
+
+    // Check if engine number already exists
+    const existingVehicleByEngine = await Vehicle.findOne({ 
+      engineNo: req.body.engineNo.toUpperCase() 
+    });
+    
+    if (existingVehicleByEngine) {
+      return res.status(400).json({ 
+        message: 'Vehicle with this engine number already exists' 
       });
     }
 
@@ -219,6 +241,46 @@ router.put('/:id', auth, upload.array('newPhotos', 6), async (req, res) => {
       return res.status(400).json({ 
         message: 'Cannot edit vehicle that is marked as out' 
       });
+    }
+
+    // Check for duplicates only if the values are being changed
+    if (req.body.vehicleNumber && req.body.vehicleNumber.toUpperCase() !== vehicle.vehicleNumber) {
+      const existingVehicleByNumber = await Vehicle.findOne({ 
+        vehicleNumber: req.body.vehicleNumber.toUpperCase(),
+        _id: { $ne: req.params.id } // Exclude current vehicle
+      });
+      
+      if (existingVehicleByNumber) {
+        return res.status(400).json({ 
+          message: 'Vehicle with this number already exists' 
+        });
+      }
+    }
+
+    if (req.body.chassisNo && req.body.chassisNo.toUpperCase() !== vehicle.chassisNo) {
+      const existingVehicleByChassis = await Vehicle.findOne({ 
+        chassisNo: req.body.chassisNo.toUpperCase(),
+        _id: { $ne: req.params.id } // Exclude current vehicle
+      });
+      
+      if (existingVehicleByChassis) {
+        return res.status(400).json({ 
+          message: 'Vehicle with this chassis number already exists' 
+        });
+      }
+    }
+
+    if (req.body.engineNo && req.body.engineNo.toUpperCase() !== vehicle.engineNo) {
+      const existingVehicleByEngine = await Vehicle.findOne({ 
+        engineNo: req.body.engineNo.toUpperCase(),
+        _id: { $ne: req.params.id } // Exclude current vehicle
+      });
+      
+      if (existingVehicleByEngine) {
+        return res.status(400).json({ 
+          message: 'Vehicle with this engine number already exists' 
+        });
+      }
     }
 
     // Process new photos if uploaded
