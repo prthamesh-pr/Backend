@@ -1,6 +1,9 @@
 # Dockerfile for Node.js Backend
 FROM node:18-alpine
 
+# Install curl for health checks
+RUN apk add --no-cache curl
+
 # Set working directory
 WORKDIR /app
 
@@ -8,10 +11,13 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
 # Copy source code
 COPY . .
+
+# Run setup script
+RUN npm run setup
 
 # Create uploads directory
 RUN mkdir -p uploads/vehicles
