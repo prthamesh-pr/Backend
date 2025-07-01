@@ -13,7 +13,9 @@
     "test:watch": "jest --watch",
     "lint": "eslint .",
     "build": "echo 'Building backend...' && npm install --production",
-    "setup": "node scripts/setup.js"
+    "setup": "node scripts/setup.js",
+    "validate-db": "node scripts/validate-db.js",
+    "db:check": "node scripts/validate-db.js"
   },
   "dependencies": {
     "express": "^4.18.2",

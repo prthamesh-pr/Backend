@@ -67,13 +67,29 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Static files for uploads
 app.use('/uploads', express.static('uploads'));
 
-// Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/jivhala_motors', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('Connected to MongoDB'))
-.catch(err => console.error('MongoDB connection error:', err));
+// Database connection with better error handling
+const connectDB = async () => {
+  try {
+    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/jivhala_motors');
+    console.log(`Connected to MongoDB: ${conn.connection.host}`);
+  } catch (error) {
+    console.error('MongoDB connection error:', error.message);
+    
+    // Provide helpful error messages for common issues
+    if (error.message.includes('IP')) {
+      console.error('\n🚨 IP WHITELIST ERROR:');
+      console.error('1. Go to MongoDB Atlas Dashboard');
+      console.error('2. Navigate to Network Access');
+      console.error('3. Add your current IP address or use 0.0.0.0/0 for all IPs (development only)');
+      console.error('4. Make sure the database user has proper permissions\n');
+    }
+    
+    process.exit(1);
+  }
+};
+
+// Connect to database
+connectDB();
 
 // Routes
 app.use('/api/auth', authRoutes);

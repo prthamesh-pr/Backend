@@ -4,8 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 const vehicleSchema = new mongoose.Schema({
   uniqueId: {
     type: String,
-    default: () => `JM-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    unique: true
+    default: () => `JM-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
   },
   // Vehicle In Details
   vehicleInDate: {
@@ -139,7 +138,7 @@ vehicleSchema.index({ chassisNo: 1 });
 vehicleSchema.index({ engineNo: 1 });
 vehicleSchema.index({ status: 1 });
 vehicleSchema.index({ vehicleInDate: 1 });
-vehicleSchema.index({ uniqueId: 1 });
+vehicleSchema.index({ uniqueId: 1 }, { unique: true });
 
 // Virtual for calculated balance
 vehicleSchema.virtual('calculatedBalance').get(function() {
