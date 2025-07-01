@@ -346,17 +346,28 @@ router.post('/:id/out', auth, upload.single('buyerPhoto'), [
   body('idProofType').isIn(['Aadhaar', 'PAN', 'DL', 'Voter', 'Passport'])
 ], async (req, res) => {
   try {
+    console.log('Vehicle Out Request - Vehicle ID:', req.params.id);
+    console.log('Vehicle Out Request - Body:', req.body);
+    console.log('Vehicle Out Request - File:', req.file ? 'Photo uploaded' : 'No photo');
+    console.log('Vehicle Out Request - User:', req.user.userId);
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      console.log('Vehicle Out Validation Errors:', errors.array());
+      return res.status(400).json({ 
+        message: 'Validation failed',
+        errors: errors.array() 
+      });
     }
 
     const vehicle = await Vehicle.findById(req.params.id);
     if (!vehicle) {
+      console.log('Vehicle not found:', req.params.id);
       return res.status(404).json({ message: 'Vehicle not found' });
     }
 
     if (vehicle.status === 'out') {
+      console.log('Vehicle already marked as out:', req.params.id);
       return res.status(400).json({ message: 'Vehicle is already marked as out' });
     }
 
@@ -386,12 +397,15 @@ router.post('/:id/out', auth, upload.single('buyerPhoto'), [
       buyerPhoto: buyerPhoto
     };
 
+    console.log('Vehicle Out - Buyer Data:', buyerData);
+
     vehicle.buyer = buyerData;
     vehicle.status = 'out';
     vehicle.outDate = req.body.outDate ? new Date(req.body.outDate) : new Date();
     vehicle.updatedBy = req.user.userId;
 
     await vehicle.save();
+    console.log('Vehicle Out - Vehicle saved successfully');
 
     // Populate the response with complete vehicle data
     const updatedVehicle = await Vehicle.findById(vehicle._id)
@@ -404,6 +418,7 @@ router.post('/:id/out', auth, upload.single('buyerPhoto'), [
     });
   } catch (error) {
     console.error('Vehicle out error:', error);
+    console.error('Vehicle out error stack:', error.stack);
     res.status(500).json({ message: 'Error marking vehicle as out', error: error.message });
   }
 });
