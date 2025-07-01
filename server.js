@@ -32,12 +32,20 @@ const corsOptions = {
       'http://localhost:3000',
       'http://localhost:3001',
       'http://10.0.2.2:3000', // Android emulator
-      'http://127.0.0.1:3000'
+      'http://127.0.0.1:3000',
+      // Flutter web development server ports
+      'http://localhost:52519',
+      'http://127.0.0.1:52519',
+      /^http:\/\/localhost:\d+$/, // Allow any localhost port for development
+      /^http:\/\/127\.0\.0\.1:\d+$/ // Allow any 127.0.0.1 port for development
     ].filter(Boolean);
     
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.some(allowed => 
+      typeof allowed === 'string' ? allowed === origin : allowed.test(origin)
+    )) {
       callback(null, true);
     } else {
+      console.log('CORS blocked origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -47,6 +55,9 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// Handle preflight requests explicitly
+app.options('*', cors(corsOptions));
 
 // Rate limiting
 const limiter = rateLimit({
