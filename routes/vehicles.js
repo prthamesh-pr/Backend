@@ -24,9 +24,22 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('image/')) {
+  console.log('File filter - checking file:', {
+    fieldname: file.fieldname,
+    originalname: file.originalname,
+    mimetype: file.mimetype,
+    size: file.size
+  });
+  
+  // Check if it's an image by MIME type or file extension
+  const isImageMimeType = file.mimetype && file.mimetype.startsWith('image/');
+  const hasImageExtension = file.originalname && /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(file.originalname);
+  
+  if (isImageMimeType || hasImageExtension) {
+    console.log('File filter - accepting file');
     cb(null, true);
   } else {
+    console.log('File filter - rejecting file - not an image');
     cb(new Error('Only image files are allowed!'), false);
   }
 };
@@ -338,7 +351,24 @@ router.put('/:id', auth, upload.array('newPhotos', 6), async (req, res) => {
 });
 
 // Vehicle Out - mark vehicle as sold
-router.post('/:id/out', auth, upload.single('buyerPhoto'), [
+router.post('/:id/out', auth, (req, res, next) => {
+  upload.single('buyerPhoto')(req, res, (err) => {
+    if (err) {
+      console.log('Multer error during vehicle out:', err.message);
+      if (err.message === 'Only image files are allowed!') {
+        return res.status(400).json({ 
+          message: 'Invalid file type. Only image files are allowed for buyer photo.',
+          error: 'INVALID_FILE_TYPE'
+        });
+      }
+      return res.status(400).json({ 
+        message: 'File upload error: ' + err.message,
+        error: 'FILE_UPLOAD_ERROR'
+      });
+    }
+    next();
+  });
+}, [
   body('buyerName').notEmpty().trim().withMessage('Buyer name is required'),
   body('address').notEmpty().trim().withMessage('Address is required'),
   body('mobileNo').matches(/^[6-9]\d{9}$/).withMessage('Valid mobile number is required'),
