@@ -11,7 +11,7 @@ const router = express.Router();
 // Multer configuration for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadDir = 'uploads/vehicles';
+    const uploadDir = path.join(__dirname, '..', 'uploads', 'vehicles');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -41,19 +41,26 @@ const upload = multer({
 
 // Create vehicle (Vehicle In)
 router.post('/in', auth, upload.array('photos', 6), [
-  body('vehicleNumber').notEmpty().trim(),
-  body('chassisNo').notEmpty().trim(),
-  body('engineNo').notEmpty().trim(),
-  body('vehicleName').notEmpty().trim(),
-  body('modelYear').isInt({ min: 1990, max: new Date().getFullYear() + 1 }),
-  body('ownerName').notEmpty().trim(),
-  body('ownerType').isIn(['1st', '2nd', '3rd']),
-  body('mobileNo').matches(/^[6-9]\d{9}$/)
+  body('vehicleNumber').notEmpty().withMessage('Vehicle number is required').trim(),
+  body('chassisNo').notEmpty().withMessage('Chassis number is required').trim(),
+  body('engineNo').notEmpty().withMessage('Engine number is required').trim(),
+  body('vehicleName').notEmpty().withMessage('Vehicle name is required').trim(),
+  body('modelYear').isInt({ min: 1990, max: new Date().getFullYear() + 1 }).withMessage('Valid model year is required'),
+  body('ownerName').notEmpty().withMessage('Owner name is required').trim(),
+  body('ownerType').isIn(['1st', '2nd', '3rd']).withMessage('Owner type must be 1st, 2nd, or 3rd'),
+  body('mobileNo').matches(/^[6-9]\d{9}$/).withMessage('Valid 10-digit mobile number is required')
 ], async (req, res) => {
   try {
+    console.log('Vehicle In Request Body:', req.body);
+    console.log('Vehicle In Files:', req.files);
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      console.log('Validation errors:', errors.array());
+      return res.status(400).json({ 
+        message: 'Validation failed',
+        errors: errors.array() 
+      });
     }
 
     // Check if vehicle number already exists
@@ -77,17 +84,22 @@ router.post('/in', auth, upload.array('photos', 6), [
 
     // Create vehicle data
     const vehicleData = {
-      ...req.body,
       vehicleNumber: req.body.vehicleNumber.toUpperCase(),
       chassisNo: req.body.chassisNo.toUpperCase(),
       engineNo: req.body.engineNo.toUpperCase(),
+      vehicleName: req.body.vehicleName,
       modelYear: parseInt(req.body.modelYear),
+      ownerName: req.body.ownerName,
+      ownerType: req.body.ownerType,
+      mobileNo: req.body.mobileNo,
+      vehicleHP: req.body.vehicleHP || '',
+      challan: req.body.challan || '',
       vehicleInDate: req.body.vehicleInDate ? new Date(req.body.vehicleInDate) : new Date(),
       insuranceDate: req.body.insuranceDate ? new Date(req.body.insuranceDate) : null,
       documents: {
-        RC: req.body.RC === 'true',
-        PUC: req.body.PUC === 'true',
-        NOC: req.body.NOC === 'true'
+        RC: req.body.RC === 'true' || req.body.RC === true,
+        PUC: req.body.PUC === 'true' || req.body.PUC === true,
+        NOC: req.body.NOC === 'true' || req.body.NOC === true
       },
       photos: photos,
       createdBy: req.user.userId
