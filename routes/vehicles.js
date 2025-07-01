@@ -269,7 +269,7 @@ router.post('/:id/out', auth, upload.single('buyerPhoto'), [
   body('address').notEmpty().trim(),
   body('mobileNo').matches(/^[6-9]\d{9}$/),
   body('price').isFloat({ min: 0 }),
-  body('idProofType').isIn(['Aadhaar', 'PAN', 'DL'])
+  body('idProofType').isIn(['Aadhaar', 'PAN', 'DL', 'Voter', 'Passport'])
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
